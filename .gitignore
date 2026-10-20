@@ -1,0 +1,13 @@
+# 本地运行产物，不入库
+ai_ceo.db
+__pycache__/
+*.pyc
+
+# 大模型密钥配置（明文存储，绝不入库）
+config.json
+
+# 系统与编辑器杂项
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
