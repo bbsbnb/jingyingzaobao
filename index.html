@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天行 · AI-CEO 经营早报</title>
+<style>
+  :root{
+    --bg:#F5F7FA; --surface:#FFFFFF; --ink:#1F2329; --sub:#6B7280; --line:#E5E7EB;
+    --blue:#185FA5; --blue50:#E6F1FB; --amber:#854F0B; --amber50:#FAEEDA;
+    --green:#3B6D11; --green50:#EAF3DE; --red:#A32D2D; --red50:#FCEBEB;
+    --gray:#5F5E5A; --gray50:#F1EFE8;
+    --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);font-size:13px;line-height:1.6;padding:0 18px 40px;max-width:1440px;margin:0 auto;
+    -webkit-font-smoothing:antialiased}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:12px;padding:12px 0;margin-bottom:6px;
+    background:linear-gradient(var(--bg) 78%,rgba(245,247,250,0));}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#1F5E9E,#137CBD);
+    color:#fff;display:grid;place-items:center;font-weight:600;font-size:15px;letter-spacing:.5px;flex:none}
+  h1{font-size:17px;font-weight:600;letter-spacing:.2px}
+  .sub{color:var(--sub);font-size:11.5px;margin-top:1px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{font-family:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink);border-radius:9px;padding:7px 13px;cursor:pointer;transition:.15s;font-weight:500;white-space:nowrap}
+  .btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue50)}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.primary:hover{background:#134D87;color:#fff}
+  .btn.danger:hover{border-color:#E5A0A0;color:var(--red);background:var(--red50)}
+  .btn.danger.confirming{background:var(--red);border-color:var(--red);color:#fff}
+  .btn.danger.confirming:hover{background:#8C2626;color:#fff}
+  .btn:active{transform:translateY(1px)}
+  .btn[disabled]{opacity:.6;cursor:progress;transform:none}
+  .btn.busy{border-color:var(--blue);color:var(--blue);background:var(--blue50)}
+  .sync{font-size:11px;color:var(--sub);align-self:center;white-space:nowrap;
+    background:var(--surface);border:1px dashed var(--line);border-radius:20px;padding:3px 10px}
+  .sync.hit{animation:syncflash 1s ease}
+  @keyframes syncflash{0%{background:var(--blue50);border-color:#9DB6CC;color:var(--blue)}100%{background:var(--surface)}}
+
+  /* ---------- 轻提示 ---------- */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);z-index:99;
+    background:#1F2329;color:#fff;font-size:12.5px;padding:9px 16px;border-radius:9px;
+    box-shadow:0 6px 20px rgba(16,24,40,.24);opacity:0;pointer-events:none;transition:.22s;max-width:82vw}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.err{background:var(--red)}
+
+  /* ---------- 卡片 ---------- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .card>summary{cursor:pointer;font-size:13px;font-weight:600;list-style:none;display:flex;align-items:center;gap:6px}
+  .card>summary::-webkit-details-marker{display:none}
+  .card>summary::before{content:"";width:0;height:0;border-left:5px solid var(--sub);
+    border-top:4px solid transparent;border-bottom:4px solid transparent;transition:.2s}
+  .card[open]>summary::before{transform:rotate(90deg)}
+  .card[open]>summary{margin-bottom:12px}
+
+  /* ---------- 上传 ---------- */
+  .drop{border:1.5px dashed #C9D3DF;border-radius:11px;padding:20px;text-align:center;color:var(--sub);
+    cursor:pointer;transition:.15s;background:#FBFCFE}
+  .drop:hover{border-color:#9DB6CC;background:#F7FAFD}
+  .drop.hot{border-color:var(--blue);background:var(--blue50)}
+  .drop .d-t{color:var(--ink);font-weight:600;font-size:13.5px}
+  .drop .d-s{font-size:11.5px;margin-top:3px}
+  .filehint{font-size:11px;color:var(--sub);margin-top:7px}
+  .uprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;
+    padding-top:10px;border-top:1px dashed var(--line)}
+  .uprow label{font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+  #upstatus{white-space:pre-line;margin-top:8px}
+
+  /* ---------- 上传结果 · 任务清单 ---------- */
+  .ul-file{margin-top:12px}
+  .ul-file .ul-fh{display:flex;justify-content:space-between;align-items:center;gap:8px;
+    font-size:11.5px;color:var(--sub);margin-bottom:5px}
+  .ul-file .ul-fh .btn{padding:2px 9px;font-size:11px;border-radius:7px}
+  .uplist{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#FCFDFF}
+  .uplist .ul-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    padding:7px 12px;background:#F3F7FB;font-size:11.5px;color:var(--sub);
+    border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .uplist .ul-h b{color:var(--ink);font-size:12.5px}
+  .uplist ul{list-style:none;max-height:300px;overflow-y:auto}
+  .uplist li{display:flex;align-items:center;gap:9px;padding:6px 12px;font-size:12px;
+    border-bottom:1px solid #F1F3F6}
+  .uplist li:last-child{border-bottom:none}
+  .uplist li:hover{background:#F7FAFD}
+  .uplist .ul-i{flex:none;width:20px;text-align:right;color:#9AA2AE;font-size:10.5px;
+    font-variant-numeric:tabular-nums}
+  .uplist .ul-sw{flex:none;font-size:10px;font-weight:600;border-radius:5px;padding:1px 6px;white-space:nowrap}
+  .uplist .ul-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .uplist .ul-o{flex:none;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    color:var(--sub);font-size:11px}
+  .uplist .ul-o.none{color:#B9A26A}
+  .uplist li.ul-more{justify-content:center;color:#9AA2AE;font-size:11px}
+  .uplist .ul-legend{display:flex;gap:14px;flex-wrap:wrap;padding:7px 12px;border-top:1px solid var(--line);
+    background:#FAFCFE;font-size:10.5px;color:var(--sub)}
+  .uplist .ul-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;
+    vertical-align:middle}
+  /* 清单收起 / 展开 */
+  .uplist .ul-hr{display:inline-flex;align-items:center;gap:10px}
+  .uplist .ul-toggle{padding:2px 9px;font-size:11px;border-radius:7px;line-height:1.5}
+  .uplist .ul-toggle::after{content:"";display:inline-block;width:0;height:0;margin-left:5px;
+    vertical-align:1px;border-top:4px solid currentColor;
+    border-left:4px solid transparent;border-right:4px solid transparent;transition:transform .2s}
+  .uplist.collapsed .ul-toggle::after{transform:rotate(-90deg)}
+  .uplist .ul-body{overflow:hidden}
+  .uplist.collapsed .ul-body{display:none}
+  .uplist.collapsed .ul-h{border-bottom:none}
+
+  /* ---------- 跨周整合：周次选择 ---------- */
+  .cs-bar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;
+    padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#FBFCFE;margin-bottom:9px}
+  .cs-l{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:260px}
+  .cs-lab{font-size:11.5px;color:var(--sub);flex:none}
+  .cs-chips{display:flex;gap:7px;flex-wrap:wrap}
+  .cs-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface);border-radius:20px;
+    padding:3px 10px 3px 8px;transition:.15s}
+  .cs-chip:hover{border-color:#9DB6CC}
+  .cs-chip.on{border-color:var(--blue);background:var(--blue50);color:var(--blue);font-weight:600}
+  .cs-chip input{accent-color:var(--blue);cursor:pointer;margin:0}
+  .cs-chip b{font-weight:600;font-size:10.5px;color:var(--sub);background:#F1F3F6;
+    border-radius:9px;padding:0 5px}
+  .cs-chip.on b{background:#D6E6F7;color:var(--blue)}
+  .cs-acts{display:flex;gap:6px;flex-wrap:wrap}
+  .cs-acts .btn{padding:4px 10px;font-size:11px;border-radius:8px}
+  .cs-count{font-size:11.5px;color:var(--sub);margin-bottom:10px}
+
+  /* ---------- 结论 ---------- */
+  .summary{background:linear-gradient(135deg,#0F2A47,#17466F);color:#EAF2FB;border-radius:var(--radius);
+    padding:14px 16px;font-size:13.5px;line-height:1.75;margin-bottom:12px;box-shadow:var(--shadow)}
+  .summary .lab{color:#8FB8DF;font-size:10.5px;display:block;margin-bottom:5px;letter-spacing:1.2px;text-transform:uppercase}
+  .summary.focus{background:linear-gradient(135deg,#1B3A28,#255433);font-size:12.5px}
+  .summary.focus .lab{color:#8CC79E}
+
+  /* ---------- KPI ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;
+    position:relative;overflow:hidden;box-shadow:var(--shadow)}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line)}
+  .kpi .l{font-size:11.5px;color:var(--sub);margin-bottom:3px}
+  .kpi .v{font-size:24px;font-weight:600;line-height:1.15;letter-spacing:-.3px}
+  .kpi .v small{font-size:13px;font-weight:500;color:var(--sub);margin-left:1px}
+  .kpi .d{font-size:10.5px;color:var(--sub);margin-top:2px}
+  .kpi.good::before{background:var(--green)} .kpi.good .v{color:var(--green)}
+  .kpi.warn::before{background:#D68C1F} .kpi.warn .v{color:var(--amber)}
+  .kpi.risk::before{background:var(--red)} .kpi.risk .v{color:var(--red)}
+  .kpi.info::before{background:var(--blue)} .kpi.info .v{color:var(--blue)}
+
+  /* ---------- 四态分布条 ---------- */
+  .statebar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .statebar .sb-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .statebar .sb-head b{font-size:12.5px;font-weight:600}
+  .statebar .sb-head span{font-size:11px;color:var(--sub)}
+  .sbar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--gray50);gap:2px}
+  .sbar i{display:block;height:100%;transition:width .5s ease}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:9px}
+  .legend .lg{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub)}
+  .legend .lg b{color:var(--ink);font-size:13px;font-weight:600}
+  .legend .dot{width:9px;height:9px;border-radius:3px;flex:none}
+
+  /* ---------- 主体网格 ---------- */
+  .grid{display:grid;grid-template-columns:minmax(340px,400px) 1fr;gap:14px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:14px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:var(--shadow)}
+  .ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;
+    padding-bottom:9px;border-bottom:1px solid var(--line)}
+  .ph b{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .ph b::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--blue)}
+  .ph .c{font-size:11px;color:var(--sub);font-weight:400}
+  .panel.warn-accent .ph b::before{background:var(--red)}
+
+  /* ---------- 警报 ---------- */
+  .alert{background:var(--amber50);border:1px solid #F2D49B;border-left:3px solid #D68C1F;
+    border-radius:9px;padding:10px 12px;margin-top:9px}
+  .alert:first-child{margin-top:0}
+  .alert.r{background:var(--red50);border-color:#EFC4C4;border-left-color:var(--red)}
+  .alert .a-t{font-weight:600;font-size:12.5px;margin-bottom:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .alert .a-s{font-size:11.5px;color:#633806;line-height:1.65}
+  .alert.r .a-s{color:#6E1B1B}
+  .tag{display:inline-block;font-size:10.5px;border-radius:5px;padding:1px 6px;font-weight:600;flex:none}
+  .tag.sk{background:#E9A9A9;color:#5E1A1A}
+  .tag.r{background:#EBC98A;color:#5A3607}
+
+  /* ---------- 人的信号 ---------- */
+  .person{background:#FAFBFC;border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-top:8px}
+  .person:first-child{margin-top:0}
+  .person .p-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .person .p-n{font-weight:600;font-size:12.5px}
+  .person .p-o{font-size:10.5px;color:var(--sub);white-space:nowrap}
+  .bar{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:7px;background:#E9ECF0;gap:1px}
+  .bar i{display:block;height:100%}
+  .person .p-note{font-size:11px;color:var(--amber);margin-top:5px}
+  .more{width:100%;margin-top:9px;display:flex;justify-content:center;color:var(--sub)}
+
+  /* ---------- 泳道 ---------- */
+  .lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .lane{border-radius:11px;padding:9px;min-height:96px;border:1px solid transparent}
+  .lane h3{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;padding:2px 3px 8px}
+  .lane h3 .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .lane h3 .cnt{margin-left:auto;font-size:11px;font-weight:600;background:rgba(255,255,255,.75);
+    border-radius:20px;padding:0 7px;line-height:17px}
+  .tcard{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-top:7px;
+    box-shadow:0 1px 1px rgba(16,24,40,.03)}
+  .tcard .t{font-weight:500;font-size:12.5px;line-height:1.5}
+  .tcard .meta{font-size:10.5px;color:var(--sub);margin-top:5px}
+  .tcard .meta.note{color:var(--amber)}
+  .chip{display:inline-block;font-size:10.5px;background:var(--blue50);color:var(--blue);
+    border-radius:5px;padding:1px 7px;margin:5px 4px 0 0;font-weight:500}
+  .empty{font-size:11px;color:#9AA2AE;text-align:center;padding:14px 0}
+
+  /* ---------- 表格 ---------- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:#F7F8FA;color:var(--sub);font-weight:600;font-size:11.5px;
+    position:sticky;top:0;z-index:1;letter-spacing:.2px}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr{transition:background .12s}
+  tbody tr:hover{background:#F8FAFC}
+  td.num{text-align:center;font-variant-numeric:tabular-nums}
+  td.good{color:var(--green);font-weight:600}
+  td.risk{color:var(--red);font-weight:600}
+  .ops{display:flex;gap:5px}
+  .ops .btn{padding:3px 8px;font-size:11px;border-radius:7px}
+
+  /* ---------- 跨周区 ---------- */
+  #consolidated{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-top:14px;box-shadow:var(--shadow)}
+  #consolidated h3{font-size:12.5px;font-weight:600;margin:16px 0 8px;
+    display:flex;align-items:center;gap:7px}
+  #consolidated h3::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--blue)}
+  .roll{background:var(--red50);border:1px solid #EFC4C4;border-left:3px solid var(--red);
+    border-radius:9px;padding:9px 11px;margin-top:8px;font-size:11.5px;line-height:1.65}
+  .roll b{font-weight:600}
+
+  /* ---------- 历史区 ---------- */
+  .hist{margin-top:20px}
+  .hist .ph{margin-bottom:12px;border-bottom:none;padding-bottom:0}
+  .hidden{display:none}
+
+  /* ---------- 响应式 ---------- */
+  @media(max-width:1180px){
+    .grid{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(3,1fr)}
+    .lanes{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:720px){
+    body{padding:0 12px 30px}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .lanes{grid-template-columns:1fr}
+    .topbar{position:static}
+    .legend{gap:12px}
+    .kpi .v{font-size:21px}
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">早</div>
+      <div>
+        <h1>天行 · AI-CEO 经营早报</h1>
+        <div class="sub">上传周任务清单 → 自动解析 · 汇总分析 · 跨周整合</div>
+      </div>
+    </div>
+    <div class="btns">
+      <span class="sync" id="syncLine">未同步</span>
+      <button class="btn" id="btnRefresh" onclick="loadLatest(true)">刷新早报</button>
+      <button class="btn" id="btnConsol" onclick="loadConsolidated(true)">跨周整合</button>
+      <button class="btn" onclick="downloadReport()">下载早报</button>
+      <button class="btn primary" onclick="downloadConsolidated()">下载跨周报告</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="drop" id="drop" onclick="document.getElementById('file').click()">
+      <div class="d-t">点击或拖拽上传本周任务清单</div>
+      <div class="d-s">支持 Word(.docx) / Excel(.xlsx、.xls、.xlsm) / CSV / 纯文本，可一次选多个文件（每个文件 = 一个周次）</div>
+      <div class="filehint">按文件内容自动判型（改名不影响识别）：识别「任务 / 责任人 / 完成状态」任务表、5W2H 派单块、状态汇总表；完成状态列可缺省，缺失时按「进行中」登记</div>
+    </div>
+    <input type="file" id="file" multiple accept=".docx,.xlsx,.xls,.xlsm,.csv,.txt" class="hidden" onchange="uploadFiles(this.files)">
+    <div class="uprow">
+      <label><input type="checkbox" id="useLlm"> 使用 AI 智能抽取（当规则识别不到任务结构时，交由大模型从原文抽取）</label>
+    </div>
+    <div id="upstatus" class="filehint"></div>
+    <div id="uplist"></div>
+  </div>
+
+  <details class="card">
+    <summary>大模型配置（可选 · 用于纯文本抽取与结论增强）</summary>
+    <div class="fl" style="display:flex;gap:12px;flex-wrap:wrap">
+      <label style="font-size:12px">服务商：<select id="llmProvider" onchange="onProviderChange()"></select></label>
+      <label style="font-size:12px">API Key：<input id="llmKey" type="password" style="width:250px" placeholder="填入对应服务商密钥"></label>
+    </div>
+    <div class="fl" id="customFields" style="display:none;gap:12px;flex-wrap:wrap;margin-top:8px">
+      <label style="font-size:12px">自定义 Base URL：<input id="llmBase" style="width:330px" placeholder="https://.../v1 或 /v3 等"></label>
+      <label style="font-size:12px">模型名：<input id="llmModel" style="width:190px" placeholder="model-name"></label>
+    </div>
+    <div class="fl" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
+      <label style="font-size:12px"><input type="checkbox" id="llmEnabled" checked> 启用大模型</label>
+      <label style="font-size:12px"><input type="checkbox" id="llmExtract" checked> 用于纯文本抽取</label>
+      <label style="font-size:12px"><input type="checkbox" id="llmSummary" checked> 用于结论增强</label>
+    </div>
+    <div class="fl" style="display:flex;gap:8px;align-items:center;margin-top:10px">
+      <button class="btn" onclick="saveLlm()">保存配置</button>
+      <button class="btn" onclick="testLlm()">连接测试</button>
+      <span id="llmStatus" class="filehint" style="margin-top:0"></span>
+    </div>
+    <div class="filehint">当前状态：<span id="llmNow">读取中…</span></div>
+    <div class="filehint">隐私提示：任务清单含内部信息，建议用私有部署或仅在可信网络配置；密钥以明文存于本地 config.json。</div>
+  </details>
+
+  <details class="card" id="wecomCard">
+    <summary>企业微信智能机器人接入（长连接 · BotID/Secret）</summary>
+    <div class="filehint">无需公网 IP、无需回调 URL、无需 Token/AESKey。在企微管理后台创建「智能机器人」，开启「API 模式 · 长连接」，把 BotID 与 Secret 填下方即可。群内 @机器人 或私聊发送的任务会自动入库生成看板。</div>
+    <div class="fl" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+      <label style="font-size:12px">BotID：<input id="wecomBotId" style="width:280px" placeholder="智能机器人 BotID"></label>
+      <label style="font-size:12px">Secret：<input id="wecomBotSecret" style="width:330px" placeholder="长连接专用 Secret"></label>
+    </div>
+    <div class="fl" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">
+      <label style="font-size:12px"><input type="checkbox" id="wecomBotAutoIngest" checked> 自动入库群任务</label>
+      <label style="font-size:12px"><input type="checkbox" id="wecomBotReply" checked> 收到后自动回复「已收录」</label>
+      <label style="font-size:12px"><input type="checkbox" id="wecomBotEnabled"> 保存后自动连接</label>
+    </div>
+    <div class="fl" style="display:flex;gap:8px;align-items:center;margin-top:10px">
+      <button class="btn" onclick="saveWecomBot()">保存配置</button>
+      <button class="btn" onclick="testWecomBot()">测试连接</button>
+      <button class="btn" onclick="startWecomBot()">连接</button>
+      <button class="btn" onclick="stopWecomBot()">断开</button>
+      <span id="wecomBotStatus" class="filehint" style="margin-top:0"></span>
+    </div>
+    <div class="filehint" style="margin-top:6px;color:#b45309">同一机器人同时仅允许一条长连接。若提示订阅失败，请确认 BotID/Secret 对应「长连接」模式（与「回调 URL」模式互斥），且后台已开启 API 模式。Secret 保存后不再回显，输入框留空保存即沿用原值；勾选「保存后自动连接」时，服务重启会自动恢复连接。</div>
+    <div class="filehint">稳定性提示：长连接依赖服务进程常驻。免费线上沙盒在长时间无请求时会休眠，休眠期间收不到群消息；需要 7×24 稳定接收时，建议部署在常驻服务器，或在本机长期运行服务并保持开机。</div>
+    <div class="filehint">连接状态：<span id="wecomBotNow">未连接</span></div>
+  </details>
+
+  <div id="briefing">
+    <div class="summary"><span class="lab">一句话结论 One-line Brief</span>正在加载…</div>
+    <div class="summary focus" id="focusBox" style="display:none"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="statebar">
+      <div class="sb-head"><b>四态分布</b><span id="sbtotal">—</span></div>
+      <div class="sbar" id="sbar"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <div class="panel warn-accent">
+          <div class="ph"><b>异常警报</b><span class="c">今天什么会炸</span></div>
+          <div id="alerts"></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><b>人的信号</b><span class="c" id="peoplesub">谁好谁差</span></div>
+          <div id="people"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><b>任务闭环看板</b><span class="c" id="boardsub">四态分道流转</span></div>
+        <div class="lanes" id="board"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="consolidated" class="hidden"></div>
+
+  <div class="hist">
+    <div class="ph"><b>历史周次</b><span class="c">可查看 / 下载报告 / 删除</span></div>
+    <div class="tbl-wrap">
+      <table id="weektable">
+        <thead><tr><th>周次</th><th>来源</th><th>生成日期</th><th>总数</th><th>闭环</th><th>收尾</th><th>进行</th><th>卡住</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+const LANES=[
+  {key:'done',name:'已闭环',bg:'#EAF3DE',dot:'#639922'},
+  {key:'partial',name:'收尾中',bg:'#E6F1FB',dot:'#378ADD'},
+  {key:'doing',name:'进行中',bg:'#FAEEDA',dot:'#BA7517'},
+  {key:'stuck',name:'卡住未反馈',bg:'#FCEBEB',dot:'#E24B4A'}
+];
+
+async function api(u,opt){
+  const r=await fetch(u,opt);
+  const txt=await r.text();
+  let d=null;
+  try{d=JSON.parse(txt);}catch(e){}
+  if(d===null){
+    if(!r.ok)throw new Error('服务返回 HTTP '+r.status);
+    throw new Error('响应不是有效的 JSON');
+  }
+  return d;
+}
+
+let _toastTimer=null;
+function toast(msg,isErr){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
+  t.textContent=msg;
+  t.className=isErr?'show err':'show';
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{t.className='';},2800);
+}
+
+function _pad(n){return String(n).padStart(2,'0');}
+function _hms(){const d=new Date();return _pad(d.getHours())+':'+_pad(d.getMinutes())+':'+_pad(d.getSeconds());}
+// 顶栏同步徽标：让每次刷新都有肉眼可见的变化
+function syncHint(b){
+  const el=document.getElementById('syncLine');if(!el)return;
+  const lab=(b&&b.meta&&b.meta.label)?(' · '+b.meta.label):'';
+  el.textContent='更新于 '+_hms()+lab;
+  el.classList.remove('hit');void el.offsetWidth;el.classList.add('hit');
+}
+// 按钮忙碌态：点击后立即有视觉反馈，避免“点了没反应”的错觉
+function _busy(btn,text){
+  if(!btn)return()=>{};
+  const old=btn.textContent;
+  btn.disabled=true;btn.classList.add('busy');btn.textContent=text;
+  return()=>{btn.disabled=false;btn.classList.remove('busy');btn.textContent=old;};
+}
+// 最小忙碌时长：本地接口毫秒级返回时，「刷新中…」也需要能被看见
+function _release(t0,done,ms){
+  ms=ms||420;
+  const dt=Date.now()-t0;
+  if(dt<ms)setTimeout(done,ms-dt);else done();
+}
+async function loadLatest(user){
+  const t0=Date.now();
+  const done=_busy(document.getElementById('btnRefresh'),'刷新中…');
+  const box=document.getElementById('consolidated');
+  if(box&&!box.classList.contains('hidden'))box.classList.add('hidden'); // 回到早报视图
+  const summary=document.querySelector('#briefing .summary');
+  summary.innerHTML='<span class="lab">一句话结论 One-line Brief</span>加载中…';
+  try{
+    const b=await api('/api/briefing');
+    renderBriefing(b);
+    syncHint(b);
+    if(user){
+      toast('早报已刷新至最新'+((b&&b.meta&&b.meta.label)?(' · '+b.meta.label):''));
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+  }catch(e){
+    summary.innerHTML='<span class="lab">提示</span>早报加载失败：'+e+'（请确认本地服务已启动）';
+    if(user)toast('刷新失败：'+e,true);
+  }finally{_release(t0,done);}
+}
+async function loadWeeks(){
+  const ws=await api('/api/weeks');const tb=document.querySelector('#weektable tbody');
+  tb.innerHTML=ws.map(w=>`<tr><td>${w.label}</td><td>${w.source}</td><td>${w.gen_date||''}</td>`+
+    `<td class="num">${w.total}</td><td class="num good">${w.done}</td><td class="num">${w.partial}</td>`+
+    `<td class="num">${w.doing}</td><td class="num risk">${w.stuck}</td>`+
+    `<td><div class="ops"><button class="btn" onclick="viewWeek(${w.id})">查看</button>`+
+    `<button class="btn" onclick="downloadWeekReport(${w.id})">报告</button>`+
+    `<button class="btn danger" onclick="deleteWeek(${w.id},this)">删除</button></div></td></tr>`).join('')
+    ||'<tr><td colspan="9" style="text-align:center;color:#9AA2AE;padding:18px">暂无周次，请上传文件</td></tr>';
+}
+async function viewWeek(id){document.getElementById('consolidated').classList.add('hidden');renderBriefing(await api('/api/briefing?week='+id));window.scrollTo(0,0);}
+
+function downloadReport(){window.location.href='/api/report';}
+function downloadWeekReport(id){window.location.href='/api/report?week='+id;}
+function downloadConsolidated(){
+  // 导出与页面所见一致的周次范围
+  const q=(_selWeeks&&_selWeeks.size)?('?weeks='+consolQuery()):'';
+  window.location.href='/api/report/consolidated'+q;
+}
+let _delPend=null,_delTimer=null;
+function _resetDelBtn(){
+  const el=document.querySelector('.btn.danger.confirming');
+  if(el){el.textContent=el.dataset.label||'删除';el.classList.remove('confirming');}
+  _delPend=null;clearTimeout(_delTimer);
+}
+// 内联二次确认：不依赖浏览器原生 confirm/alert（内嵌预览面板会拦截原生弹窗）
+function deleteWeek(id,el){
+  if(_delPend!==id){
+    _resetDelBtn();
+    _delPend=id;
+    if(el){el.dataset.label=el.textContent;el.textContent='确认删除';el.classList.add('confirming');}
+    _delTimer=setTimeout(_resetDelBtn,4000);
+    toast('再点一次「确认删除」即可移除该周次（4 秒内有效）');
+    return;
+  }
+  _resetDelBtn();
+  _doDelete(id);
+}
+async function _doDelete(id){
+  try{
+    const r=await api('/api/week?id='+id,{method:'DELETE'});
+    if(r&&r.error)throw new Error(r.error);
+    toast('已删除该周次及其任务数据');
+    await loadWeeks();await loadLatest();
+  }catch(e){toast('删除失败：'+e,true);}
+}
+
+function renderBriefing(b){
+  const summaryEl=document.querySelector('#briefing .summary');
+  if(!b||b.error){summaryEl.innerHTML='<span class="lab">提示</span>暂无数据，请先上传任务清单。';
+    document.getElementById('kpis').innerHTML='';document.getElementById('sbar').innerHTML='';
+    document.getElementById('legend').innerHTML='';document.getElementById('sbtotal').textContent='—';
+    document.getElementById('alerts').innerHTML='';document.getElementById('people').innerHTML='';
+    document.getElementById('peoplesub').textContent='谁好谁差';
+    document.getElementById('board').innerHTML='';return;}
+  const k=b.kpis;
+  summaryEl.innerHTML='<span class="lab">一句话结论 One-line Brief'+(b.llm_enhanced?' · LLM 增强':'')+'</span>'+b.summary;
+
+  // 核心 KPI（5 项，四态改由下方分布条承载，避免重复）
+  const kpis=[
+    {v:k.health,l:'经营健康指数',d:'满分 10',cls:k.health>=7?'good':(k.health>=5?'warn':'risk')},
+    {v:k.closure_rate+'<small>%</small>',l:'行动闭环率',d:'加权口径',cls:'info'},
+    {v:k.risk_count,l:'风险项',d:'需立即处置',cls:k.risk_count>0?'risk':''},
+    {v:k.overdue,l:'逾期行动',d:'超承诺时限',cls:k.overdue>0?'risk':''},
+    {v:k.total,l:'派单总数',d:'本期',cls:''}
+  ];
+  document.getElementById('kpis').innerHTML=kpis.map(x=>
+    `<div class="kpi ${x.cls}"><div class="l">${x.l}</div><div class="v">${x.v}</div><div class="d">${x.d}</div></div>`).join('');
+
+  // 四态分布条
+  const st=LANES.map(l=>({...l,n:(b.board&&b.board[l.key]||[]).length}));
+  const sum=st.reduce((a,c)=>a+c.n,0)||1;
+  document.getElementById('sbtotal').textContent=sum+' 项任务';
+  document.getElementById('sbar').innerHTML=st.map(s=>
+    s.n?`<i style="width:${s.n/sum*100}%;background:${s.dot}" title="${s.name} ${s.n}"></i>`:'').join('');
+  document.getElementById('legend').innerHTML=st.map(s=>
+    `<div class="lg"><span class="dot" style="background:${s.dot}"></span>${s.name} <b>${s.n}</b></div>`).join('');
+
+  // 异常警报
+  document.getElementById('alerts').innerHTML=(b.alerts||[]).map(a=>
+    `<div class="alert ${a.type==='risk'?'r':''}"><div class="a-t">`+
+    `<span class="tag ${a.type==='risk'?'sk':'r'}">${a.type==='risk'?'风险':'关注'}</span>${a.title}</div>`+
+    `<div class="a-s">${a.detail}</div></div>`).join('')
+    ||'<div class="empty">暂无警报</div>';
+
+  // 人的信号：按风险优先排序，默认只展前 8 人，其余折叠
+  const pe=(b.people||[]).slice().sort((a,c)=>(c.stuck-a.stuck)||(c.partial-a.partial)||(c.total-a.total));
+  const stuckCnt=pe.filter(p=>p.stuck>0).length;
+  document.getElementById('peoplesub').textContent=pe.length?`共 ${pe.length} 人 · ${stuckCnt} 人有卡单`:'谁好谁差';
+  const personHTML=p=>{
+    const s=(p.done+p.partial+p.stuck+p.doing)||1;
+    return `<div class="person"><div class="p-h"><span class="p-n">${p.name}</span>`+
+      `<span class="p-o">承接 ${p.total} · 完 ${p.done} · 部分 ${p.partial} · 卡 ${p.stuck} · 进 ${p.doing}</span></div>`+
+      `<div class="bar"><i style="width:${p.done/s*100}%;background:#639922"></i>`+
+      `<i style="width:${p.partial/s*100}%;background:#378ADD"></i>`+
+      `<i style="width:${p.stuck/s*100}%;background:#E24B4A"></i>`+
+      `<i style="width:${p.doing/s*100}%;background:#BA7517"></i></div>`+
+      (p.note?`<div class="p-note">${esc(p.note)}</div>`:'')+'</div>';
+  };
+  const TOP=8, shown=pe.slice(0,TOP), rest=pe.slice(TOP);
+  document.getElementById('people').innerHTML=(shown.map(personHTML).join('')||'<div class="empty">无人员数据</div>')+
+    (rest.length?`<div id="morePeople" class="hidden">${rest.map(personHTML).join('')}</div>`+
+      `<button class="btn more" data-label="展开其余 ${rest.length} 人" onclick="toggleMore(this)">展开其余 ${rest.length} 人</button>`:'');
+
+  // 泳道
+  document.getElementById('board').innerHTML=LANES.map(l=>{
+    const items=(b.board&&b.board[l.key])||[];
+    return `<div class="lane" style="background:${l.bg}">`+
+      `<h3><span class="dot" style="background:${l.dot}"></span>${l.name}<span class="cnt">${items.length}</span></h3>`+
+      (items.length?items.map(t=>`<div class="tcard"><div class="t">${esc(t.title)}</div>`+
+        `<div>${(t.owners||[]).map(o=>`<span class="chip">${esc(o)}</span>`).join('')}</div>`+
+        (t.note?`<div class="meta note">${/^(验收|做法)：/.test(t.note)?'':'注：'}${esc(t.note)}</div>`:'')+
+        (t.due?`<div class="meta">时限 ${esc(t.due)} · 依据 ${esc(t.basis||'—')}</div>`
+              :`<div class="meta">依据 ${esc(t.basis||'—')}</div>`)+
+        `</div>`).join(''):'<div class="empty">—</div>')+'</div>';
+  }).join('');
+
+  // 督办焦点
+  const fb=document.getElementById('focusBox');
+  if(b.focus&&b.focus.length){
+    fb.style.display='block';
+    fb.innerHTML='<span class="lab">今日督办焦点 AI Focus</span>'+b.focus.map(x=>'· '+x).join('<br>');
+  }else{fb.style.display='none';}
+}
+
+function toggleMore(btn){
+  const box=document.getElementById('morePeople');if(!box)return;
+  const open=box.classList.toggle('hidden');   // toggle 返回是否已隐藏
+  btn.textContent=open?btn.dataset.label:('收起');
+  if(open)btn.scrollIntoView({block:'nearest'});
+}
+// ---- 跨周整合：自选参与周次 ----
+let _allWeeks=[],_selWeeks=new Set(),_selInited=false,_consolTimer=null;
+
+async function loadConsolidated(user){
+  const t0=Date.now();
+  const done=_busy(document.getElementById('btnConsol'),'整合中…');
+  const box=document.getElementById('consolidated');box.classList.remove('hidden');
+  try{
+    _allWeeks=await api('/api/weeks');
+    const ids=_allWeeks.map(w=>w.id);
+    if(!_selInited){_selWeeks=new Set(ids);_selInited=true;}          // 首次打开默认全选
+    else{
+      [..._selWeeks].forEach(id=>{if(ids.indexOf(id)<0)_selWeeks.delete(id);});  // 剔除已删除的周次
+      if(!_selWeeks.size&&ids.length)_selWeeks=new Set(ids);
+    }
+    buildConsolShell(box);
+    await renderConsol();
+    syncHint(null);
+    if(user){
+      toast('跨周整合已更新 · 已选 '+_selWeeks.size+' / '+_allWeeks.length+' 个周次');
+      box.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+  }catch(e){
+    box.innerHTML='<div class="filehint">跨周整合加载失败：'+e+'（请确认本地服务已启动）</div>';
+    if(user)toast('跨周整合失败：'+e,true);
+  }finally{_release(t0,done);}
+}
+
+function buildConsolShell(box){
+  box.innerHTML=
+    '<div class="ph"><b>跨周整合</b><span class="c">趋势 / 滚存 / 人员一致性</span></div>'+
+    '<div class="cs-bar">'+
+      '<div class="cs-l"><span class="cs-lab">参与周次</span><div class="cs-chips" id="csChips"></div></div>'+
+      '<div class="cs-acts">'+
+        '<button type="button" class="btn" onclick="selRecent(4)">最近 4 周</button>'+
+        '<button type="button" class="btn" onclick="selRecent(2)">最近 2 周</button>'+
+        '<button type="button" class="btn" onclick="selAll()">全选</button>'+
+        '<button type="button" class="btn" onclick="selNone()">清空</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="cs-count" id="csCount"></div>'+
+    '<div id="csResult"></div>';
+  renderChips();
+}
+
+function shortLabel(s){
+  s=String(s==null?'':s);
+  const i=s.indexOf(' ·');
+  return i>0?s.slice(0,i):s;
+}
+function renderChips(){
+  const el=document.getElementById('csChips');if(!el)return;
+  el.innerHTML=_allWeeks.map(w=>
+    `<label class="cs-chip${_selWeeks.has(w.id)?' on':''}" title="${esc(w.label)}（${w.total} 项）">`+
+    `<input type="checkbox"${_selWeeks.has(w.id)?' checked':''} onchange="toggleWeekSel(${w.id},this.checked,this)">`+
+    `<span>${esc(shortLabel(w.label))}</span><b>${w.total}</b></label>`).join('')
+    ||'<span class="filehint" style="margin:0">暂无周次，请先上传任务清单</span>';
+  updateCount();
+}
+function updateCount(){
+  const cnt=document.getElementById('csCount');if(!cnt)return;
+  const picked=_allWeeks.filter(w=>_selWeeks.has(w.id));
+  cnt.textContent=picked.length
+    ? '已选 '+picked.length+' / '+_allWeeks.length+' 个周次 · 覆盖 '+picked.reduce((a,c)=>a+c.total,0)+' 项任务'
+    : '尚未选择任何周次';
+}
+function toggleWeekSel(id,on,el){
+  if(on)_selWeeks.add(id);else _selWeeks.delete(id);
+  const chip=el&&el.closest?el.closest('.cs-chip'):null;   // 只切换样式，不重建，保留键盘焦点
+  if(chip)chip.classList.toggle('on',on);
+  updateCount();scheduleConsol();
+}
+function selAll(){_selWeeks=new Set(_allWeeks.map(w=>w.id));renderChips();scheduleConsol();}
+function selNone(){_selWeeks=new Set();renderChips();scheduleConsol();}
+function selRecent(n){_selWeeks=new Set(_allWeeks.slice(0,n).map(w=>w.id));renderChips();scheduleConsol();}
+function scheduleConsol(){clearTimeout(_consolTimer);_consolTimer=setTimeout(()=>renderConsol(true),260);}
+function consolQuery(){return [..._selWeeks].sort((a,b)=>a-b).join(',');}
+
+async function renderConsol(quiet){
+  const out=document.getElementById('csResult');if(!out)return;
+  if(!_selWeeks.size){
+    out.innerHTML='<div class="filehint">请至少勾选一个周次。跨周趋势与滚存需要基于所选周次计算。</div>';
+    return;
+  }
+  if(!quiet)out.innerHTML='<div class="filehint">跨周整合加载中…</div>';
+  try{
+    const c=await api('/api/consolidated?weeks='+consolQuery());
+    let h='';
+    h+='<div class="tbl-wrap"><table><thead><tr><th>周次</th><th>总数</th><th>闭环率</th><th>已闭环</th><th>卡住</th></tr></thead><tbody>'+
+      (c.trend||[]).map(t=>`<tr><td>${esc(t.label)}</td><td class="num">${t.total}</td><td class="num">${t.closure_rate}%</td>`+
+        `<td class="num good">${t.done}</td><td class="num risk">${t.stuck}</td></tr>`).join('')+'</tbody></table></div>';
+    if((c.rollover||[]).length){
+      h+='<h3>未闭环滚存（跨周仍未收口）</h3>'+c.rollover.map(r=>
+        `<div class="roll"><b>【${esc(r.from_week)}】${esc(r.title)}</b> · ${esc((r.owners||[]).join('/')||'未指派')}（${esc(r.status)}）｜ ${esc(r.note||'')}</div>`).join('');
+    }
+    if((c.people_consistency||[]).length){
+      h+='<h3>跨周持续承压人员</h3><div class="tbl-wrap"><table><thead><tr><th>姓名</th><th>出现周次</th><th>未闭环累计</th><th>承接累计</th></tr></thead><tbody>'+
+        c.people_consistency.map(p=>`<tr><td>${esc(p.name)}</td><td class="num">${p.weeks}</td>`+
+          `<td class="num risk">${p.stuck}</td><td class="num">${p.total}</td></tr>`).join('')+'</tbody></table></div>';
+    }
+    if(_selWeeks.size===1)h+='<div class="filehint">当前只选了 1 个周次，滚存与人员一致性需要 2 个及以上周次才有意义。</div>';
+    if(!(c.trend||[]).length)h+='<div class="filehint">所选周次暂无任务数据。</div>';
+    out.innerHTML=h;
+  }catch(e){
+    out.innerHTML='<div class="filehint">跨周整合加载失败：'+e+'</div>';
+  }
+}
+
+function toB64(buf){
+  // 分块转换，避免超大文件一次性展开参数导致的 RangeError
+  const bytes=new Uint8Array(buf);const CH=0x8000;let s='';
+  for(let i=0;i<bytes.length;i+=CH){s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));}
+  return btoa(s);
+}
+const ST={
+  done:{n:'已闭环',c:'#639922',bg:'#EAF3DE'},
+  partial:{n:'收尾中',c:'#2B6BB0',bg:'#E6F1FB'},
+  doing:{n:'进行中',c:'#8A5A10',bg:'#FAEEDA'},
+  stuck:{n:'卡住未反馈',c:'#A32D2D',bg:'#FCEBEB'}
+};
+const MODE={table:'标准任务表',w5h2:'5W2H 派单块',summary:'状态汇总表',text:'纯文本兜底',llm:'AI 抽取'};
+
+// 渲染「本次识别到的任务清单」
+function taskListHTML(r){
+  const ts=r.tasks||[];
+  if(!ts.length)return '';
+  const CAP=60;
+  const rows=ts.slice(0,CAP).map((t,i)=>{
+    const s=ST[t.status]||{n:t.status||'—',c:'#6B7280',bg:'#F1EFE8'};
+    const ow=(t.owners&&t.owners.length)?t.owners.join('、'):'未指派';
+    return `<li><span class="ul-i">${i+1}</span>`+
+      `<span class="ul-sw" style="background:${s.bg};color:${s.c}">${s.n}</span>`+
+      `<span class="ul-t" title="${esc(t.title)}">${esc(t.title)}</span>`+
+      `<span class="ul-o${(t.owners&&t.owners.length)?'':' none'}">${esc(ow)}</span></li>`;
+  }).join('');
+  const more=ts.length>CAP?`<li class="ul-more">… 其余 ${ts.length-CAP} 项请在下方看板查看</li>`:'';
+  const used=[...new Set(ts.map(t=>t.status))];
+  const legend=used.map(k=>{const s=ST[k]||{n:k,c:'#6B7280'};
+    return `<span><i style="background:${s.c}"></i>${s.n} ${ts.filter(t=>t.status===k).length}</span>`;}).join('');
+  const mode=MODE[r.mode]?(' · 识别方式：'+MODE[r.mode]):'';
+  // 责任人数从任务里现算：源文件未附「责任分布表」时，people 为空但任务是有责任人的
+  const ownerSet=new Set();ts.forEach(t=>(t.owners||[]).forEach(o=>{if(o)ownerSet.add(o);}));
+  return `<div class="uplist">`+
+    `<div class="ul-h"><span>本次识别到的任务清单 <b>${ts.length}</b> 项${mode}</span>`+
+    `<span class="ul-hr"><span>共 ${ownerSet.size} 人有承接记录</span>`+
+    `<button type="button" class="btn ul-toggle" aria-expanded="true" onclick="toggleUl(this)">收起</button></span></div>`+
+    `<div class="ul-body"><ul>${rows}${more}</ul>`+
+    `<div class="ul-legend">${legend}</div></div></div>`;
+}
+// 清单收起 / 展开（每个文件独立控制，不依赖原生交互）
+function toggleUl(btn){
+  const box=btn.closest('.uplist');if(!box)return;
+  const col=box.classList.toggle('collapsed');
+  btn.textContent=col?'展开':'收起';
+  btn.setAttribute('aria-expanded',col?'false':'true');
+  if(!col){const u=box.querySelector('ul');if(u)u.scrollTop=0;}
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+async function uploadFiles(files){
+  const st=document.getElementById('upstatus');st.textContent='';
+  const lbox=document.getElementById('uplist');lbox.innerHTML='';
+  const useLlm=document.getElementById('useLlm').checked;
+  for(const f of files){
+    st.textContent+=`… ${f.name} 解析中\n`;
+    try{
+      const b64=toB64(await f.arrayBuffer());
+      const r=await api('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({filename:f.name,data:b64,use_llm:useLlm})});
+      if(r.error){
+        st.textContent=st.textContent.replace(`… ${f.name} 解析中\n`,`✘ ${f.name}：${r.error}\n`);
+        if(r.llm_hint)st.textContent+=`   ↳ ${r.llm_hint}\n`;
+        continue;
+      }
+      const tag=(r.source&&r.source.indexOf('llm')>=0)?'（AI 抽取）':'';
+      st.textContent=st.textContent.replace(`… ${f.name} 解析中\n`,
+        `✔ ${f.name} → 解析 ${r.parsed_count} 项任务（周次#${r.week_id}）${tag}\n`);
+      if(r.hint)st.textContent+=`   ↳ ${r.hint}\n`;
+      if(r.llm_hint)st.textContent+=`   ↳ ${r.llm_hint}\n`;
+      lbox.insertAdjacentHTML('beforeend',
+        `<div class="ul-file"><div class="ul-fh"><span>${esc(f.name)}</span>`+
+        `<button class="btn" onclick="viewWeek(${r.week_id})">在下方看板中查看</button></div>`+
+        taskListHTML(r)+`</div>`);
+    }catch(e){
+      st.textContent=st.textContent.replace(`… ${f.name} 解析中\n`,`✘ ${f.name} 上传失败：${e}\n`);
+    }
+  }
+  await loadWeeks();await loadLatest();
+}
+
+// 拖拽
+const drop=document.getElementById('drop');
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('hot');}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('hot');}));
+drop.addEventListener('drop',ev=>{if(ev.dataTransfer.files)uploadFiles(ev.dataTransfer.files);});
+
+// ---- 大模型配置 ----
+async function loadProviders(){
+  const ps=await api('/api/config/providers');const sel=document.getElementById('llmProvider');
+  sel.innerHTML=ps.map(p=>`<option value="${p.key}">${p.label}</option>`).join('');
+}
+async function loadLlmConfig(){
+  const c=await api('/api/config');
+  document.getElementById('llmEnabled').checked=!!c.enabled;
+  document.getElementById('llmExtract').checked=!!c.use_for_extract;
+  document.getElementById('llmSummary').checked=!!c.use_for_summary;
+  if(c.provider){document.getElementById('llmProvider').value=c.provider;onProviderChange();}
+  if(c.base_url)document.getElementById('llmBase').value=c.base_url;
+  if(c.model)document.getElementById('llmModel').value=c.model;
+  document.getElementById('llmNow').textContent=(c.enabled?('已启用 · '+c.provider_label+' · '+c.model):'未配置（规则分析）')+(c.api_key_masked?(' · key '+c.api_key_masked):'');
+}
+function onProviderChange(){
+  const p=document.getElementById('llmProvider').value;
+  document.getElementById('customFields').style.display=(p==='custom')?'flex':'none';
+}
+async function saveLlm(){
+  const p=document.getElementById('llmProvider').value;
+  const body={provider:p,enabled:document.getElementById('llmEnabled').checked,
+    use_for_extract:document.getElementById('llmExtract').checked,use_for_summary:document.getElementById('llmSummary').checked};
+  const k=document.getElementById('llmKey').value.trim();
+  if(k)body.api_key=k;
+  if(p==='custom'){body.base_url=document.getElementById('llmBase').value.trim();body.model=document.getElementById('llmModel').value.trim();}
+  await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  document.getElementById('llmStatus').textContent='已保存';
+  loadLlmConfig();
+}
+async function testLlm(){
+  const p=document.getElementById('llmProvider').value;
+  const body={provider:p,base_url:document.getElementById('llmBase').value.trim(),
+    model:document.getElementById('llmModel').value.trim(),api_key:document.getElementById('llmKey').value.trim()};
+  document.getElementById('llmStatus').textContent='测试中…';
+  const r=await api('/api/config/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  document.getElementById('llmStatus').textContent=r.ok?('✓ 连接成功：'+(r.echo||'')):('✘ '+(r.error||'失败'));
+}
+
+// ---- 企业微信智能机器人（长连接）----
+let _botTimer = null;
+function _botErr(e){
+  const s=String((e&&e.message)?e.message:(e||''));
+  if(s.indexOf('404')>=0) return '服务端未就绪或版本较旧，请刷新页面（Ctrl+F5）后重试';
+  if(/Failed to fetch|NetworkError|Load failed/i.test(s)) return '无法连接服务，请确认服务在运行';
+  return s.replace(/^Error:\s*/,'');
+}
+async function _botPost(path,body){
+  const opt={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})};
+  try{ return await api(path,opt); }
+  catch(e){
+    if(String(e).indexOf('404')>=0){
+      await new Promise(r=>setTimeout(r,1200));
+      return await api(path,opt);
+    }
+    throw e;
+  }
+}
+function _botPoll(){
+  if(_botTimer) return;
+  _botTimer = setInterval(refreshBotStatus, 3000);
+}
+function _botStopPoll(){
+  if(_botTimer){ clearInterval(_botTimer); _botTimer=null; }
+}
+async function loadWecomBotConfig(){
+  try{
+    const c=await api('/api/wecom/config');
+    document.getElementById('wecomBotId').value = c.bot_id||'';
+    if(c.bot_secret && !String(c.bot_secret).includes('****')) document.getElementById('wecomBotSecret').value=c.bot_secret;
+    document.getElementById('wecomBotAutoIngest').checked = c.auto_ingest!==false;
+    document.getElementById('wecomBotReply').checked = c.reply_on_receive!==false;
+    document.getElementById('wecomBotEnabled').checked = !!c.bot_enabled;
+    refreshBotStatus();
+  }catch(e){}
+}
+async function saveWecomBot(){
+  const body={
+    mode:'bot',
+    bot_id:document.getElementById('wecomBotId').value.trim(),
+    bot_secret:document.getElementById('wecomBotSecret').value.trim(),
+    auto_ingest:document.getElementById('wecomBotAutoIngest').checked,
+    reply_on_receive:document.getElementById('wecomBotReply').checked,
+    bot_enabled:document.getElementById('wecomBotEnabled').checked
+  };
+  const st=document.getElementById('wecomBotStatus');
+  st.textContent='保存中…';
+  try{
+    await _botPost('/api/wecom/config',body);
+    st.textContent='✔ 已保存';
+    if(body.bot_enabled){
+      const r=await startWecomBot();
+      if(!r.ok) st.textContent='✔ 已保存，但自动连接失败：'+(r.error||'');
+    }
+    loadWecomBotConfig();
+  }catch(e){ st.textContent='✘ 保存失败：'+_botErr(e); }
+}
+async function testWecomBot(){
+  const st=document.getElementById('wecomBotStatus');
+  st.textContent='测试中…';
+  try{
+    const r=await _botPost('/api/wecom/bot/test',{
+      bot_id:document.getElementById('wecomBotId').value.trim(),
+      bot_secret:document.getElementById('wecomBotSecret').value.trim()
+    });
+    st.textContent=(r.ok?('✔ '+r.detail):('✘ '+(r.detail||'失败')));
+  }catch(e){ st.textContent='✘ 测试失败：'+_botErr(e); }
+}
+async function startWecomBot(){
+  const st=document.getElementById('wecomBotStatus');
+  st.textContent='连接中…';
+  try{
+    const r=await _botPost('/api/wecom/bot/start',{});
+    st.textContent=(r.ok?('✔ '+(r.state==='running'?'已连接':(r.state||'已启动'))):('✘ '+(r.error||'失败')));
+    refreshBotStatus();
+    return r;
+  }catch(e){
+    st.textContent='✘ 连接失败：'+_botErr(e);
+    refreshBotStatus();
+    return {ok:false,error:_botErr(e)};
+  }
+}
+async function stopWecomBot(){
+  const st=document.getElementById('wecomBotStatus');
+  st.textContent='断开中…';
+  try{
+    const r=await _botPost('/api/wecom/bot/stop',{});
+    st.textContent=r.ok?'✔ 已断开':'✘ 失败';
+  }catch(e){ st.textContent='✘ 断开失败：'+_botErr(e); }
+  refreshBotStatus();
+}
+async function refreshBotStatus(){
+  try{
+    const r=await api('/api/wecom/bot/status');
+    const el=document.getElementById('wecomBotNow');
+    const map={running:'● 已连接并接收消息',starting:'○ 连接中…',stopped:'○ 未连接'};
+    el.textContent=(map[r.state]||r.state)+(r.msg?('（'+r.msg+'）'):'')+(r.recv?(' 已收 '+r.recv+' 条'):'');
+  }catch(e){}
+}
+try{
+  const wc=document.getElementById('wecomCard');
+  if(wc){ wc.addEventListener('toggle',()=>{ if(wc.open){ loadWecomBotConfig(); _botPoll(); } else { _botStopPoll(); } }); }
+}catch(e){}
+
+loadProviders();loadLlmConfig();loadWecomBotConfig();loadWeeks();loadLatest();
+</script>
+</body>
+</html>
