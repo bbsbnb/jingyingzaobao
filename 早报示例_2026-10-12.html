@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天行 · AI-CEO 经营早报（离线快照）</title><style>:root{
+    --bg:#F5F7FA; --surface:#FFFFFF; --ink:#1F2329; --sub:#6B7280; --line:#E5E7EB;
+    --blue:#185FA5; --blue50:#E6F1FB; --amber:#854F0B; --amber50:#FAEEDA;
+    --green:#3B6D11; --green50:#EAF3DE; --red:#A32D2D; --red50:#FCEBEB;
+    --gray:#5F5E5A; --gray50:#F1EFE8;
+    --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);font-size:13px;line-height:1.6;padding:0 18px 40px;max-width:1440px;margin:0 auto;
+    -webkit-font-smoothing:antialiased}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:12px;padding:12px 0;margin-bottom:6px;
+    background:linear-gradient(var(--bg) 78%,rgba(245,247,250,0));}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#1F5E9E,#137CBD);
+    color:#fff;display:grid;place-items:center;font-weight:600;font-size:15px;letter-spacing:.5px;flex:none}
+  h1{font-size:17px;font-weight:600;letter-spacing:.2px}
+  .sub{color:var(--sub);font-size:11.5px;margin-top:1px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{font-family:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink);border-radius:9px;padding:7px 13px;cursor:pointer;transition:.15s;font-weight:500;white-space:nowrap}
+  .btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue50)}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.primary:hover{background:#134D87;color:#fff}
+  .btn.danger:hover{border-color:#E5A0A0;color:var(--red);background:var(--red50)}
+
+  /* ---------- 卡片 ---------- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .card>summary{cursor:pointer;font-size:13px;font-weight:600;list-style:none;display:flex;align-items:center;gap:6px}
+  .card>summary::-webkit-details-marker{display:none}
+  .card>summary::before{content:"";width:0;height:0;border-left:5px solid var(--sub);
+    border-top:4px solid transparent;border-bottom:4px solid transparent;transition:.2s}
+  .card[open]>summary::before{transform:rotate(90deg)}
+  .card[open]>summary{margin-bottom:12px}
+
+  /* ---------- 上传 ---------- */
+  .drop{border:1.5px dashed #C9D3DF;border-radius:11px;padding:20px;text-align:center;color:var(--sub);
+    cursor:pointer;transition:.15s;background:#FBFCFE}
+  .drop:hover{border-color:#9DB6CC;background:#F7FAFD}
+  .drop.hot{border-color:var(--blue);background:var(--blue50)}
+  .drop .d-t{color:var(--ink);font-weight:600;font-size:13.5px}
+  .drop .d-s{font-size:11.5px;margin-top:3px}
+  .filehint{font-size:11px;color:var(--sub);margin-top:7px}
+  .uprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;
+    padding-top:10px;border-top:1px dashed var(--line)}
+  .uprow label{font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+  #upstatus{white-space:pre-line;margin-top:8px}
+
+  /* ---------- 结论 ---------- */
+  .summary{background:linear-gradient(135deg,#0F2A47,#17466F);color:#EAF2FB;border-radius:var(--radius);
+    padding:14px 16px;font-size:13.5px;line-height:1.75;margin-bottom:12px;box-shadow:var(--shadow)}
+  .summary .lab{color:#8FB8DF;font-size:10.5px;display:block;margin-bottom:5px;letter-spacing:1.2px;text-transform:uppercase}
+  .summary.focus{background:linear-gradient(135deg,#1B3A28,#255433);font-size:12.5px}
+  .summary.focus .lab{color:#8CC79E}
+
+  /* ---------- KPI ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;
+    position:relative;overflow:hidden;box-shadow:var(--shadow)}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line)}
+  .kpi .l{font-size:11.5px;color:var(--sub);margin-bottom:3px}
+  .kpi .v{font-size:24px;font-weight:600;line-height:1.15;letter-spacing:-.3px}
+  .kpi .v small{font-size:13px;font-weight:500;color:var(--sub);margin-left:1px}
+  .kpi .d{font-size:10.5px;color:var(--sub);margin-top:2px}
+  .kpi.good::before{background:var(--green)} .kpi.good .v{color:var(--green)}
+  .kpi.warn::before{background:#D68C1F} .kpi.warn .v{color:var(--amber)}
+  .kpi.risk::before{background:var(--red)} .kpi.risk .v{color:var(--red)}
+  .kpi.info::before{background:var(--blue)} .kpi.info .v{color:var(--blue)}
+
+  /* ---------- 四态分布条 ---------- */
+  .statebar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .statebar .sb-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .statebar .sb-head b{font-size:12.5px;font-weight:600}
+  .statebar .sb-head span{font-size:11px;color:var(--sub)}
+  .sbar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--gray50);gap:2px}
+  .sbar i{display:block;height:100%;transition:width .5s ease}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:9px}
+  .legend .lg{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub)}
+  .legend .lg b{color:var(--ink);font-size:13px;font-weight:600}
+  .legend .dot{width:9px;height:9px;border-radius:3px;flex:none}
+
+  /* ---------- 主体网格 ---------- */
+  .grid{display:grid;grid-template-columns:minmax(340px,400px) 1fr;gap:14px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:14px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:var(--shadow)}
+  .ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;
+    padding-bottom:9px;border-bottom:1px solid var(--line)}
+  .ph b{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .ph b::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--blue)}
+  .ph .c{font-size:11px;color:var(--sub);font-weight:400}
+  .panel.warn-accent .ph b::before{background:var(--red)}
+
+  /* ---------- 警报 ---------- */
+  .alert{background:var(--amber50);border:1px solid #F2D49B;border-left:3px solid #D68C1F;
+    border-radius:9px;padding:10px 12px;margin-top:9px}
+  .alert:first-child{margin-top:0}
+  .alert.r{background:var(--red50);border-color:#EFC4C4;border-left-color:var(--red)}
+  .alert .a-t{font-weight:600;font-size:12.5px;margin-bottom:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .alert .a-s{font-size:11.5px;color:#633806;line-height:1.65}
+  .alert.r .a-s{color:#6E1B1B}
+  .tag{display:inline-block;font-size:10.5px;border-radius:5px;padding:1px 6px;font-weight:600;flex:none}
+  .tag.sk{background:#E9A9A9;color:#5E1A1A}
+  .tag.r{background:#EBC98A;color:#5A3607}
+
+  /* ---------- 人的信号 ---------- */
+  .person{background:#FAFBFC;border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-top:8px}
+  .person:first-child{margin-top:0}
+  .person .p-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .person .p-n{font-weight:600;font-size:12.5px}
+  .person .p-o{font-size:10.5px;color:var(--sub);white-space:nowrap}
+  .bar{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:7px;background:#E9ECF0;gap:1px}
+  .bar i{display:block;height:100%}
+  .person .p-note{font-size:11px;color:var(--amber);margin-top:5px}
+  .more{width:100%;margin-top:9px;display:flex;justify-content:center;color:var(--sub)}
+
+  /* ---------- 泳道 ---------- */
+  .lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .lane{border-radius:11px;padding:9px;min-height:96px;border:1px solid transparent}
+  .lane h3{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;padding:2px 3px 8px}
+  .lane h3 .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .lane h3 .cnt{margin-left:auto;font-size:11px;font-weight:600;background:rgba(255,255,255,.75);
+    border-radius:20px;padding:0 7px;line-height:17px}
+  .tcard{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-top:7px;
+    box-shadow:0 1px 1px rgba(16,24,40,.03)}
+  .tcard .t{font-weight:500;font-size:12.5px;line-height:1.5}
+  .tcard .meta{font-size:10.5px;color:var(--sub);margin-top:5px}
+  .tcard .meta.note{color:var(--amber)}
+  .chip{display:inline-block;font-size:10.5px;background:var(--blue50);color:var(--blue);
+    border-radius:5px;padding:1px 7px;margin:5px 4px 0 0;font-weight:500}
+  .empty{font-size:11px;color:#9AA2AE;text-align:center;padding:14px 0}
+
+  /* ---------- 表格 ---------- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:#F7F8FA;color:var(--sub);font-weight:600;font-size:11.5px;
+    position:sticky;top:0;z-index:1;letter-spacing:.2px}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr{transition:background .12s}
+  tbody tr:hover{background:#F8FAFC}
+  td.num{text-align:center;font-variant-numeric:tabular-nums}
+  td.good{color:var(--green);font-weight:600}
+  td.risk{color:var(--red);font-weight:600}
+  .ops{display:flex;gap:5px}
+  .ops .btn{padding:3px 8px;font-size:11px;border-radius:7px}
+
+  /* ---------- 跨周区 ---------- */
+  #consolidated{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-top:14px;box-shadow:var(--shadow)}
+  #consolidated h3{font-size:12.5px;font-weight:600;margin:16px 0 8px;
+    display:flex;align-items:center;gap:7px}
+  #consolidated h3::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--blue)}
+  .roll{background:var(--red50);border:1px solid #EFC4C4;border-left:3px solid var(--red);
+    border-radius:9px;padding:9px 11px;margin-top:8px;font-size:11.5px;line-height:1.65}
+  .roll b{font-weight:600}
+
+  /* ---------- 历史区 ---------- */
+  .hist{margin-top:20px}
+  .hist .ph{margin-bottom:12px;border-bottom:none;padding-bottom:0}
+  .hidden{display:none}
+
+  /* ---------- 响应式 ---------- */
+  @media(max-width:1180px){
+    .grid{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(3,1fr)}
+    .lanes{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:720px){
+    body{padding:0 12px 30px}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .lanes{grid-template-columns:1fr}
+    .topbar{position:static}
+    .legend{gap:12px}
+    .kpi .v{font-size:21px}
+  }</style></head>
+<body>
+
+ <div class="topbar">
+  <div class="brand">
+   <div class="logo">早</div>
+   <div>
+    <h1>天行 · AI-CEO 经营早报</h1>
+    <div class="sub">离线快照 · 基于《天行公司交流群周报_20261012.docx》自动解析 · 持续使用请运行 app.py 上传多周次</div>
+   </div>
+  </div>
+  <div class="btns"><button class="btn" onclick="window.print()">打印 / 存为 PDF</button></div>
+ </div>
+
+ <div class="summary"><span class="lab">一句话结论 One-line Brief</span>加载中…</div>
+ <div class="summary focus" id="focusBox" style="display:none"></div>
+
+ <div class="kpis" id="kpis"></div>
+
+ <div class="statebar">
+  <div class="sb-head"><b>四态分布</b><span id="sbtotal">—</span></div>
+  <div class="sbar" id="sbar"></div>
+  <div class="legend" id="legend"></div>
+ </div>
+
+ <div class="grid">
+  <div class="col">
+   <div class="panel warn-accent"><div class="ph"><b>异常警报</b><span class="c">今天什么会炸</span></div><div id="alerts"></div></div>
+   <div class="panel"><div class="ph"><b>人的信号</b><span class="c" id="peoplesub">谁好谁差</span></div><div id="people"></div></div>
+  </div>
+  <div class="panel">
+   <div class="ph"><b>任务闭环看板</b><span class="c">四态分道流转</span></div>
+   <div class="lanes" id="board"></div>
+  </div>
+ </div>
+
+ <div class="filehint" style="margin-top:16px">
+  本页为离线快照，数据内嵌，双击即开，可微信 / 安卓传阅。口径说明：加权闭环率 =(已闭环 + 0.5×收尾中) / 总数；
+  经营健康指数为规则合成分（0~10），仅作趋势参考，非考核依据。上传多周次请运行 app.py 使用在线版。
+ </div>
+
+<script>
+const LANES=[
+ {key:'done',name:'已闭环',bg:'#EAF3DE',dot:'#639922'},
+ {key:'partial',name:'收尾中',bg:'#E6F1FB',dot:'#378ADD'},
+ {key:'doing',name:'进行中',bg:'#FAEEDA',dot:'#BA7517'},
+ {key:'stuck',name:'卡住未反馈',bg:'#FCEBEB',dot:'#E24B4A'}
+];
+function toggleMore(btn){
+ const box=document.getElementById('morePeople');if(!box)return;
+ const hidden=box.classList.toggle('hidden');
+ btn.textContent=hidden?btn.dataset.label:'收起';
+ if(hidden)btn.scrollIntoView({block:'nearest'});
+}
+function renderBriefing(b){
+ if(!b||b.error){document.querySelector('.summary').innerHTML='<span class="lab">提示</span>无数据';return;}
+ const k=b.kpis;
+ document.querySelector('.summary').innerHTML='<span class="lab">一句话结论 One-line Brief'+(b.llm_enhanced?' · LLM 增强':'')+'</span>'+b.summary;
+
+ // 核心 KPI（5 项，与在线界面同口径）
+ const kpis=[
+  {v:k.health,l:'经营健康指数',d:'满分 10',cls:k.health>=7?'good':(k.health>=5?'warn':'risk')},
+  {v:k.closure_rate+'<small>%</small>',l:'行动闭环率',d:'加权口径',cls:'info'},
+  {v:k.risk_count,l:'风险项',d:'需立即处置',cls:k.risk_count>0?'risk':''},
+  {v:k.overdue,l:'逾期行动',d:'超承诺时限',cls:k.overdue>0?'risk':''},
+  {v:k.total,l:'派单总数',d:'本期',cls:''}
+ ];
+ document.getElementById('kpis').innerHTML=kpis.map(x=>
+  '<div class="kpi '+x.cls+'"><div class="l">'+x.l+'</div><div class="v">'+x.v+'</div><div class="d">'+x.d+'</div></div>').join('');
+
+ // 四态分布条
+ const st=LANES.map(l=>({...l,n:(b.board&&b.board[l.key]||[]).length}));
+ const sum=st.reduce((a,c)=>a+c.n,0)||1;
+ document.getElementById('sbtotal').textContent=sum+' 项任务';
+ document.getElementById('sbar').innerHTML=st.map(s=>s.n?'<i style="width:'+(s.n/sum*100)+'%;background:'+s.dot+'" title="'+s.name+' '+s.n+'"></i>':'').join('');
+ document.getElementById('legend').innerHTML=st.map(s=>
+  '<div class="lg"><span class="dot" style="background:'+s.dot+'"></span>'+s.name+' <b>'+s.n+'</b></div>').join('');
+
+ // 异常警报
+ document.getElementById('alerts').innerHTML=(b.alerts||[]).map(a=>
+  '<div class="alert '+(a.type==='risk'?'r':'')+'"><div class="a-t"><span class="tag '+(a.type==='risk'?'sk':'r')+'">'+(a.type==='risk'?'风险':'关注')+'</span>'+a.title+'</div><div class="a-s">'+a.detail+'</div></div>').join('')
+  ||'<div class="empty">暂无警报</div>';
+
+ // 人的信号
+ // 人的信号：按风险优先排序，默认只展前 8 人，其余折叠
+ const pe=(b.people||[]).slice().sort((a,c)=>(c.stuck-a.stuck)||(c.partial-a.partial)||(c.total-a.total));
+ const stuckCnt=pe.filter(p=>p.stuck>0).length;
+ document.getElementById('peoplesub').textContent=pe.length?('共 '+pe.length+' 人 · '+stuckCnt+' 人有卡单'):'谁好谁差';
+ const personHTML=p=>{const s=(p.done+p.partial+p.stuck+p.doing)||1;
+  return '<div class="person"><div class="p-h"><span class="p-n">'+p.name+'</span><span class="p-o">承接 '+p.total+' · 完 '+p.done+' · 部分 '+p.partial+' · 卡 '+p.stuck+' · 进 '+p.doing+'</span></div>'+
+  '<div class="bar"><i style="width:'+(p.done/s*100)+'%;background:#639922"></i><i style="width:'+(p.partial/s*100)+'%;background:#378ADD"></i><i style="width:'+(p.stuck/s*100)+'%;background:#E24B4A"></i><i style="width:'+(p.doing/s*100)+'%;background:#BA7517"></i></div>'+
+  (p.note?'<div class="p-note">'+p.note+'</div>':'')+'</div>';};
+ const TOP=8, shown=pe.slice(0,TOP), rest=pe.slice(TOP);
+ document.getElementById('people').innerHTML=(shown.map(personHTML).join('')||'<div class="empty">无人员数据</div>')+
+  (rest.length?'<div id="morePeople" class="hidden">'+rest.map(personHTML).join('')+'</div>'+
+   '<button class="btn more" data-label="展开其余 '+rest.length+' 人" onclick="toggleMore(this)">展开其余 '+rest.length+' 人</button>':'');
+
+ // 泳道
+ document.getElementById('board').innerHTML=LANES.map(l=>{const items=(b.board&&b.board[l.key])||[];
+  return '<div class="lane" style="background:'+l.bg+'">'+
+  '<h3><span class="dot" style="background:'+l.dot+'"></span>'+l.name+'<span class="cnt">'+items.length+'</span></h3>'+
+  (items.length?items.map(t=>'<div class="tcard"><div class="t">'+t.title+'</div>'+
+  '<div>'+(t.owners||[]).map(o=>'<span class="chip">'+o+'</span>').join('')+'</div>'+
+  (t.note?'<div class="meta note">注：'+t.note+'</div>':'')+
+  (t.due?'<div class="meta">时限 '+t.due+' · 依据 '+(t.basis||'—')+'</div>':'<div class="meta">依据 '+(t.basis||'—')+'</div>')+
+  '</div>').join(''):'<div class="empty">—</div>')+'</div>';}).join('');
+
+ // 督办焦点
+ const fb=document.getElementById('focusBox');
+ if(b.focus&&b.focus.length){fb.style.display='block';
+  fb.innerHTML='<span class="lab">今日督办焦点 AI Focus</span>'+b.focus.map(x=>'· '+x).join('<br>');}
+ else{fb.style.display='none';}
+}
+
+var EMBEDDED={"meta": {"label": "周报 2026-10-12", "gen_date": "2026-10-12", "ref_date": [10, 12], "source": "docx"}, "kpis": {"health": 5.4, "closure_rate": 52.8, "done_rate": 44.4, "risk_count": 3, "overdue": 10, "total": 18, "done": 8, "partial": 3, "doing": 2, "stuck": 5, "ai_single_point": 1}, "alerts": [{"type": "risk", "title": "5 项任务零回执（已读未闭环）", "detail": "WorkBuddy 财务场景（王锋花/杨一凡）、财务制度完善参考（五个破局点（柳金霞/王锋花/杨一凡）、分包成本管控管理办法及落地闭（宋小臣）、一中项目横道图试用与结果反馈（朱旭光/沈苍）、合同审查智能体两项追问（知识（虞娟丽）。多数止于「收到」，无交付物、无反馈、无时限，追责时无法举证，也无法区分「已做未报」与「未做」。建议本周会议第一议题清欠，逐项给出口径。", "related": [11, 12, 13, 15, 16]}, {"type": "risk", "title": "2 项会议/讨论成果无载体", "detail": "分组议题讨论（13 人）、全员单项议题讨论会。会已召开但结论表/纪要未进群，前序投入无法转化为制度条款。责任在流程（模板已下发未回收），建议指定汇总人点对点催办并留痕。", "related": [4, 5]}, {"type": "watch", "title": "承接过度集中（朱旭光 一人扛 33% 的任务）", "detail": "朱旭光 单人承接 6 项任务，占比 33%，存在单点依赖与休假/离职风险。建议同类任务增设备份承接人。", "related": [6, 7, 9, 10, 15, 17]}, {"type": "risk", "title": "10 项行动已逾期（超时限未闭环）", "detail": "任务编号 4、5、11、12、13、14、15、16、17、18 已超过承诺时限且未闭环，建议升级催办并要求在 T+1 内给出明确口径或交付物。", "related": [4, 5, 11, 12, 13, 14, 15, 16, 17, 18]}], "people": [{"name": "朱旭光", "total": 6, "done": 4, "partial": 0, "doing": 1, "stuck": 1, "note": "AI 类任务承接人（单点依赖风险）"}, {"name": "宋小臣", "total": 3, "done": 1, "partial": 1, "doing": 0, "stuck": 1, "note": "AI 类任务承接人（单点依赖风险）"}, {"name": "虞娟丽", "total": 3, "done": 1, "partial": 0, "doing": 1, "stuck": 1, "note": "AI 类任务承接人（单点依赖风险）"}, {"name": "杨一凡", "total": 2, "done": 0, "partial": 0, "doing": 0, "stuck": 2, "note": "零回应（派单无回执）"}, {"name": "沈苍", "total": 2, "done": 1, "partial": 0, "doing": 0, "stuck": 1, "note": "AI 类任务承接人（单点依赖风险）"}, {"name": "王锋花", "total": 2, "done": 0, "partial": 0, "doing": 0, "stuck": 2, "note": "零回应（派单无回执）"}, {"name": "刘总", "total": 1, "done": 1, "partial": 0, "doing": 0, "stuck": 0, "note": ""}, {"name": "各组指定 1 人汇总", "total": 1, "done": 0, "partial": 1, "doing": 0, "stuck": 0, "note": ""}, {"name": "张雪妮", "total": 1, "done": 1, "partial": 0, "doing": 0, "stuck": 0, "note": ""}, {"name": "柳总召集", "total": 1, "done": 0, "partial": 1, "doing": 0, "stuck": 0, "note": ""}, {"name": "柳金霞", "total": 1, "done": 0, "partial": 0, "doing": 0, "stuck": 1, "note": "零回应（派单无回执）"}, {"name": "潘婷", "total": 1, "done": 0, "partial": 1, "doing": 0, "stuck": 0, "note": ""}, {"name": "王武", "total": 1, "done": 1, "partial": 0, "doing": 0, "stuck": 0, "note": "AI 类任务承接人（单点依赖风险）"}, {"name": "赵蓉", "total": 1, "done": 0, "partial": 1, "doing": 0, "stuck": 0, "note": ""}], "board": {"done": [{"id": 1, "title": "「提满解」六点分歧、八道讨论题作答提交", "owners": ["全员"], "due": "原 10/10 09:00，改 10/8 12:00", "basis": "张雪妮 10/8 08:42 更改通知", "note": "", "asks": 0}, {"id": 2, "title": "梳理形成《十三组对立观点总清单》", "owners": ["刘总"], "due": "10/8 当日", "basis": "刘总 10/8 17:06", "note": "", "asks": 0}, {"id": 3, "title": "拟定讨论会议程、下发通知与结论表模板", "owners": ["张雪妮"], "due": "10/8 会前", "basis": "张雪妮 10/8 18:08、10/9 08:55", "note": "", "asks": 0}, {"id": 6, "title": "AI 施工方案试用并反馈心得", "owners": ["朱旭光", "沈苍"], "due": "10/9", "basis": "刘总 10/9 09:28", "note": "", "asks": 0}, {"id": 7, "title": "智能体需求表格编制（附功能说明）", "owners": ["朱旭光"], "due": "10/9–10/10", "basis": "朱旭光 10/9 14:37、10/10 08:49", "note": "", "asks": 0}, {"id": 8, "title": "合同审查 Skill 试用与效果反馈", "owners": ["虞娟丽"], "due": "10/9", "basis": "虞娟丽 10/9 15:13", "note": "", "asks": 0}, {"id": 9, "title": "「工程行业 AI 应用」群内论述（能开展哪些工作、为什么）", "owners": ["王武", "朱旭光"], "due": "10/9", "basis": "刘总 10/9 10:12", "note": "", "asks": 0}, {"id": 10, "title": "施工规范 / 标准知识库归档", "owners": ["宋小臣", "朱旭光"], "due": "10/10", "basis": "刘总 10/10 09:00", "note": "", "asks": 0}], "partial": [{"id": 4, "title": "分组议题讨论（13 人）", "owners": ["柳总召集", "各组指定 1 人汇总"], "due": "10/9", "basis": "柳总 10/9 08:32", "note": "", "asks": 0}, {"id": 5, "title": "全员单项议题讨论会", "owners": ["全员"], "due": "10/10 09:00 一楼会议室", "basis": "张雪妮 10/8 18:08", "note": "", "asks": 0}, {"id": 14, "title": "材料管理办法借鉴优化", "owners": ["宋小臣", "赵蓉", "潘婷"], "due": "10/9", "basis": "刘总 10/9 09:29", "note": "", "asks": 0}], "doing": [{"id": 17, "title": "智能体方案与计划编制上报", "owners": ["朱旭光"], "due": "10/10 派单", "basis": "刘总 10/10 08:56", "note": "", "asks": 0}, {"id": 18, "title": "可投标项目寻找、投标、投标短板调研报告", "owners": ["虞娟丽"], "due": "10/10 派单\"尽快\"", "basis": "王武 10/10 11:48", "note": "", "asks": 0}], "stuck": [{"id": 11, "title": "WorkBuddy 财务场景试用与反馈", "owners": ["王锋花", "杨一凡"], "due": "10/9", "basis": "刘总 10/9 09:13", "note": "", "asks": 0}, {"id": 12, "title": "财务制度完善参考（五个破局点）", "owners": ["柳金霞", "王锋花", "杨一凡"], "due": "10/9", "basis": "刘总 10/9 10:09", "note": "", "asks": 0}, {"id": 13, "title": "分包成本管控管理办法及落地闭环流程", "owners": ["宋小臣"], "due": "10/9", "basis": "刘总 10/9 08:56、09:12", "note": "", "asks": 0}, {"id": 15, "title": "一中项目横道图试用与结果反馈", "owners": ["朱旭光", "沈苍"], "due": "10/9", "basis": "刘总 10/9 10:42", "note": "", "asks": 0}, {"id": 16, "title": "合同审查智能体两项追问（知识库依赖 / 引入判例与法律原文可行性）", "owners": ["虞娟丽"], "due": "10/9", "basis": "刘总 10/9 15:14、15:18", "note": "", "asks": 0}]}, "summary": "本周派发 18 项任务，闭环 8 项（加权闭环率 52.8%），收尾中 3 项、进行中 2 项、卡在未反馈 5 项。主要风险：5 项任务零回执（已读未闭环）；2 项会议/讨论成果无载体；10 项行动已逾期（超时限未闭环）。", "tasks": [{"id": 1, "title": "「提满解」六点分歧、八道讨论题作答提交", "owners": ["全员"], "status": "done", "due": "原 10/10 09:00，改 10/8 12:00", "basis": "张雪妮 10/8 08:42 更改通知", "note": "", "raw_status": "已按期收齐（本群无逐人签收记录，答卷详见分管领导群）"}, {"id": 2, "title": "梳理形成《十三组对立观点总清单》", "owners": ["刘总"], "status": "done", "due": "10/8 当日", "basis": "刘总 10/8 17:06", "note": "", "raw_status": "已完成"}, {"id": 3, "title": "拟定讨论会议程、下发通知与结论表模板", "owners": ["张雪妮"], "status": "done", "due": "10/8 会前", "basis": "张雪妮 10/8 18:08、10/9 08:55", "note": "", "raw_status": "已完成"}, {"id": 4, "title": "分组议题讨论（13 人）", "owners": ["柳总召集", "各组指定 1 人汇总"], "status": "partial", "due": "10/9", "basis": "柳总 10/9 08:32", "note": "", "raw_status": "已召开（08:40 一楼会议室）；结论表回收情况未见"}, {"id": 5, "title": "全员单项议题讨论会", "owners": ["全员"], "status": "partial", "due": "10/10 09:00 一楼会议室", "basis": "张雪妮 10/8 18:08", "note": "", "raw_status": "会已按安排召开；群内无结论同步"}, {"id": 6, "title": "AI 施工方案试用并反馈心得", "owners": ["朱旭光", "沈苍"], "status": "done", "due": "10/9", "basis": "刘总 10/9 09:28", "note": "", "raw_status": "已完成（14:09 / 14:37 两份反馈）"}, {"id": 7, "title": "智能体需求表格编制（附功能说明）", "owners": ["朱旭光"], "status": "done", "due": "10/9–10/10", "basis": "朱旭光 10/9 14:37、10/10 08:49", "note": "", "raw_status": "已完成（63 个→17 个，刘总认可并派下一步）"}, {"id": 8, "title": "合同审查 Skill 试用与效果反馈", "owners": ["虞娟丽"], "status": "done", "due": "10/9", "basis": "虞娟丽 10/9 15:13", "note": "", "raw_status": "已完成反馈（含 Demo.html）"}, {"id": 9, "title": "「工程行业 AI 应用」群内论述（能开展哪些工作、为什么）", "owners": ["王武", "朱旭光"], "status": "done", "due": "10/9", "basis": "刘总 10/9 10:12", "note": "", "raw_status": "部分完成（朱旭光 11:59 已答；王武未见回答）"}, {"id": 10, "title": "施工规范 / 标准知识库归档", "owners": ["宋小臣", "朱旭光"], "status": "done", "due": "10/10", "basis": "刘总 10/10 09:00", "note": "", "raw_status": "已完成（朱旭光\"已归档\"）"}, {"id": 11, "title": "WorkBuddy 财务场景试用与反馈", "owners": ["王锋花", "杨一凡"], "status": "stuck", "due": "10/9", "basis": "刘总 10/9 09:13", "note": "", "raw_status": "未反馈"}, {"id": 12, "title": "财务制度完善参考（五个破局点）", "owners": ["柳金霞", "王锋花", "杨一凡"], "status": "stuck", "due": "10/9", "basis": "刘总 10/9 10:09", "note": "", "raw_status": "未反馈"}, {"id": 13, "title": "分包成本管控管理办法及落地闭环流程", "owners": ["宋小臣"], "status": "stuck", "due": "10/9", "basis": "刘总 10/9 08:56、09:12", "note": "", "raw_status": "未反馈（仅\"收到\"）"}, {"id": 14, "title": "材料管理办法借鉴优化", "owners": ["宋小臣", "赵蓉", "潘婷"], "status": "partial", "due": "10/9", "basis": "刘总 10/9 09:29", "note": "", "raw_status": "部分（宋小臣 10:05\"收到\"；赵蓉、潘婷未见回应）"}, {"id": 15, "title": "一中项目横道图试用与结果反馈", "owners": ["朱旭光", "沈苍"], "status": "stuck", "due": "10/9", "basis": "刘总 10/9 10:42", "note": "", "raw_status": "未反馈（仅\"收到\"）"}, {"id": 16, "title": "合同审查智能体两项追问（知识库依赖 / 引入判例与法律原文可行性）", "owners": ["虞娟丽"], "status": "stuck", "due": "10/9", "basis": "刘总 10/9 15:14、15:18", "note": "", "raw_status": "未答复（回\"我在试下\"）"}, {"id": 17, "title": "智能体方案与计划编制上报", "owners": ["朱旭光"], "status": "doing", "due": "10/10 派单", "basis": "刘总 10/10 08:56", "note": "", "raw_status": "进行中"}, {"id": 18, "title": "可投标项目寻找、投标、投标短板调研报告", "owners": ["虞娟丽"], "status": "doing", "due": "10/10 派单\"尽快\"", "basis": "王武 10/10 11:48", "note": "", "raw_status": "进行中"}], "overdue_ids": [4, 5, 11, 12, 13, 14, 15, 16, 17, 18]};
+renderBriefing(EMBEDDED);
+</script></body></html>
