@@ -623,7 +623,8 @@ class WeComBotClient:
                     except Exception:
                         continue
                     if msg.get("cmd") == "aibot_msg_callback":
-                        self._handle(msg.get("body", {}))
+                        self._handle(msg.get("body", {}),
+                                     msg.get("headers", {}).get("req_id"))
                 backoff = 1
             except Exception as e:
                 self.on_log("长连接异常：%s" % e)
@@ -655,18 +656,22 @@ class WeComBotClient:
         except Exception as e:
             self.on_log("消息处理异常：%s" % e)
 
-    def send_msg(self, chatid, chat_type, content, req_id=None, msgtype="text"):
+    def send_msg(self, chatid, chat_type, content, req_id=None, msgtype="markdown"):
         """长连接上行回包：通过 aibot_send_msg 主动发 / 回复消息，零 token、零 HTTP。
         req_id 透传 aibot_msg_callback 的 headers.req_id 时即回复该会话，否则自生成。"""
         if not self.ws:
             raise ConnectionError("长连接未建立")
         rid = req_id or _req_id()
-        self.ws.send_cmd("aibot_send_msg", {
-            "chatid": chatid,
-            "chat_type": chat_type,
-            "msgtype": msgtype,
-            "content": content,
-        }, rid)
+        if chat_type in (0, 1, 2):
+            ct = int(chat_type)
+        else:
+            ct = {"single": 1, "group": 2}.get(str(chat_type), 0)
+        body = {"chatid": chatid, "chat_type": ct, "msgtype": msgtype}
+        if msgtype == "template_card":
+            body["template_card"] = content if isinstance(content, dict) else {"content": content}
+        else:
+            body["markdown"] = {"content": content}
+        self.ws.send_cmd("aibot_send_msg", body, rid)
         resp = self.ws.wait_response(rid, timeout=10)
         if resp is None:
             raise ConnectionError("上行 aibot_send_msg 未收到响应（超时）")
